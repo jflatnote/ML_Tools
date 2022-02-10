@@ -1,0 +1,89 @@
+def run_xgboost_tree(train_X, train_y, val_X, val_y):
+    model_name = 'XGBoost'
+    model_scores = pd.DataFrame(columns = ['model_name', 'run', 'run_notes', 'accuracy', 'RMSE', 'MAE'])
+    
+    run = 1
+    rate = 0.05
+    # Run XGBoost in gbtree with variable learning_rate
+    while rate <= 0.3:
+        xg_reg = xgb.XGBRegressor(booster='gbtree', learning_rate=rate, n_estimators=3460, max_depth=2, 
+                                min_child_weight=0, gamma=0, subsample=0.7, 
+                                colsample_bytree=0.7, objective= 'reg:squarederror',
+                                nthread=4, scale_pos_weight=1, seed=27, 
+                                reg_alpha=0.00006)
+
+        xg_reg.fit(train_X, train_y)
+        preds = xg_reg.predict(val_X)
+
+        to_append = [model_name + "(tree, var learning)", run, f'gbtree; l_rate: {rate}', r2_score(val_y,preds), mean_squared_error(val_y,preds), 
+                    mean_absolute_error(val_y,preds)]
+        a_series = pd.Series(to_append, index = model_scores.columns)
+        model_scores = model_scores.append(a_series, ignore_index=True)
+        run += 1
+        rate += 0.025
+    
+    # Run XGBoost in gbtree with variable depth
+    rate = 3
+    while rate <= 10:
+        xg_reg = xgb.XGBRegressor(booster='gbtree', learning_rate=0.05, n_estimators=3460, max_depth=rate, 
+                                min_child_weight=0, gamma=0, subsample=0.7, 
+                                colsample_bytree=0.7, objective= 'reg:squarederror',
+                                nthread=4, scale_pos_weight=1, seed=27, 
+                                reg_alpha=0.00006)
+
+        xg_reg.fit(train_X, train_y)
+        preds = xg_reg.predict(val_X)
+
+        to_append = [model_name + " (tree, var depth)", run, f'max_depth: {rate}', r2_score(val_y,preds), mean_squared_error(val_y,preds), 
+                    mean_absolute_error(val_y,preds)]
+        a_series = pd.Series(to_append, index = model_scores.columns)
+        model_scores = model_scores.append(a_series, ignore_index=True)
+        run += 1
+        rate += 1
+
+    return preds, model_scores
+
+def run_xgboost_line(train_X, train_y, val_X, val_y):
+    run = 1
+    rate = 0.05
+    model_name = 'XGBoost'
+    model_scores = pd.DataFrame(columns = ['model_name', 'run', 'run_notes', 'accuracy', 'RMSE', 'MAE'])
+    # Run XGBoost in gblinear with variable learning_rate
+    rate = 0.05
+    while rate <= 0.3:
+        xg_reg = xgb.XGBRegressor(booster='gblinear', learning_rate=rate, n_estimators=3460, max_depth=2, 
+                                min_child_weight=0, gamma=0, subsample=0.7, 
+                                colsample_bytree=0.7, objective= 'reg:squarederror',
+                                nthread=4, scale_pos_weight=1, seed=27, 
+                                reg_alpha=0.00006)
+
+        xg_reg.fit(train_X, train_y)
+        preds = xg_reg.predict(val_X)
+
+        to_append = [model_name + ' (line, var learning)', run, f'l_rate: {rate}', r2_score(val_y,preds), mean_squared_error(val_y,preds), 
+                    mean_absolute_error(val_y,preds)]
+        a_series = pd.Series(to_append, index = model_scores.columns)
+        model_scores = model_scores.append(a_series, ignore_index=True)
+        run += 1
+        rate += 0.025
+    
+    # Run XGBoost in gblinear with variable depth
+    rate = 3
+    while rate <= 10:
+        xg_reg = xgb.XGBRegressor(booster='gbtree', learning_rate=0.05, n_estimators=3460, max_depth=rate, 
+                                min_child_weight=0, gamma=0, subsample=0.7, 
+                                colsample_bytree=0.7, objective= 'reg:squarederror',
+                                nthread=4, scale_pos_weight=1, seed=27, 
+                                reg_alpha=0.00006)
+
+        xg_reg.fit(train_X, train_y)
+        preds = xg_reg.predict(val_X)
+
+        to_append = [model_name + ' (line, var depth)', run, f'max_depth: {rate}', r2_score(val_y,preds), mean_squared_error(val_y,preds), 
+                    mean_absolute_error(val_y,preds)]
+        a_series = pd.Series(to_append, index = model_scores.columns)
+        model_scores = model_scores.append(a_series, ignore_index=True)
+        run += 1
+        rate += 1
+   
+    return preds, model_scores
